@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.INFO, filename='app.log',
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 sessionStorage = {}
 all_cities = city_arr[:]
+print(all_cities)
 
 
 @app.route('/post', methods=['POST'])

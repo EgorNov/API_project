@@ -2,7 +2,7 @@ from flask import Flask, request
 import logging
 import json
 from geo import get_geo_info, get_picture
-from cities import cities as city_arr
+from cities1 import city_arr
 
 app = Flask(__name__)
 
@@ -31,19 +31,22 @@ def main():
 def handle_dialog(res, req):
     user_id = req['session']['user_id']
     if req['session']['new']:
-        sessionStorage[user_id] = {
-            'first_name': None,
-        }
-
+        logging.warning(user_id)
+        sessionStorage[user_id] = {}
+        sessionStorage[user_id]['first_name'] = None
+        logging.warning(sessionStorage)
         res['response']['text'] = \
-            'Привет! Я могу играть с тобой в города! Учти что я знаю только русские города' + '\nНазови свое имя'
+            'Привет! Я могу играть с тобой в города! Учти что я знаю только русские города.' + '\nНазови свое имя.'
         return
+    logging.warning('1')
+    logging.warning(sessionStorage)
     if sessionStorage[user_id]['first_name'] is None:
         for entity in req['request']['nlu']['entities']:
             if entity['type'] == 'YANDEX.FIO':
                 sessionStorage[user_id]['first_name'] = entity['value'].get('first_name', None)
                 break
-
+        logging.warning('2')
+        logging.warning(sessionStorage)
         if sessionStorage[user_id]['first_name'] is None:
             res['response']['text'] = \
                 'Не расслышала имя, повтори.'
@@ -57,8 +60,11 @@ def handle_dialog(res, req):
     if not cities:
         res['response']['text'] = sessionStorage[user_id]['first_name'] + ', ты не написал название города!'
     elif len(cities) == 1:
+        logging.warning('а')
         if cities[0] in all_cities:
+            logging.warning('б')
             if cities[0] in city_arr:
+                logging.warning('в')
                 city_arr.pop(city_arr.index(cities[0]))
                 city = get_city(cities[0][-1])
                 if city:
@@ -66,6 +72,7 @@ def handle_dialog(res, req):
                     res['response']['card']['type'] = 'BigImage'
                     res['response']['card']['title'] = 'Это ' + city.title() + ' на карте, твоя очередь'
                     res['response']['card']['image_id'] = get_picture(get_geo_info(city))
+                    logging.warning('г')
                     if get_city(city[-1], alice=True):
                         res['response']['text'] = city.title() + ', тебе на ' + city[-1]
                     else:
@@ -80,6 +87,7 @@ def handle_dialog(res, req):
                                           'first_name'] + ', я не знаю такого города! Попробуй другой)'
     else:
         res['response']['text'] = sessionStorage[user_id]['first_name'] + ', слишком много городов!'
+    return
 
 
 def get_city(letter, alice=False):

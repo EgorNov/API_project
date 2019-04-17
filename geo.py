@@ -20,13 +20,11 @@ def get_geo_info(city_name):
         # Вернем ответ
         return long, lat
 
-
     except Exception as e:
         return e
 
 
 def get_picture(coords):
-    response = None
     try:
         map_request = "http://static-maps.yandex.ru/1.x/"
         lon, lat = coords
@@ -35,11 +33,11 @@ def get_picture(coords):
             "z": "10",
             "l": "map"
         }
-        response = requests.get(map_request)
+        resp = requests.get(map_request, params=params)
 
-        if not response:
+        if not resp:
             print("Ошибка выполнения запроса:")
-    except:
+    except Exception:
         print("Запрос не удалось выполнить. Проверьте наличие сети Интернет.")
         sys.exit(1)
 
@@ -47,16 +45,15 @@ def get_picture(coords):
     map_file = "map.png"
     try:
         with open(map_file, "wb") as file:
-            file.write(response.content)
+            file.write(resp.content)
     except IOError as ex:
         print("Ошибка записи временного файла:", ex)
         sys.exit(2)
 
     skill_id = 'ff930959-af59-4b76-ac73-688158f4dcbf'
     token = 'AQAAAAADXyKXAAT7o0qDFWCp6EyPr0JuYtnKxjM'
-    file_name = map_file
     url = f'https://dialogs.yandex.net/api/v1/skills/{skill_id}/images'
-    files = {'file': open(file_name, 'rb')}
+    files = {'file': resp.content}
     headers = {'Authorization': f'OAuth {token}'}
     s = post(url, files=files, headers=headers)
     picture_code = s.json()['image']['id']

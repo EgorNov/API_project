@@ -1,7 +1,7 @@
 from flask import Flask, request
 import logging
 import json
-from geo import get_geo_info, get_picture
+from geo import get_geo_info, get_picture, get_city_name
 from cities1 import city_arr
 
 app = Flask(__name__)
@@ -10,7 +10,6 @@ logging.basicConfig(level=logging.INFO, filename='app.log',
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 sessionStorage = {}
 all_cities = city_arr[:]
-print(all_cities)
 
 
 @app.route('/post', methods=['POST'])
@@ -30,6 +29,7 @@ def main():
 
 def handle_dialog(res, req):
     global city_arr
+
     user_id = req['session']['user_id']
     if req['session']['new']:
         logging.warning(user_id)
@@ -56,6 +56,15 @@ def handle_dialog(res, req):
             res['response']['text'] = \
                 'Приятно познакомиться, ' + sessionStorage[user_id]['first_name'] + '. Ты начинаешь!'
         return
+    res['response']['buttons'] = [
+        {'title': 'Заново', 'hide': True}
+    ]
+    if 'заново' in req['request']['original_utterance'].lower():
+                sessionStorage[user_id]['end'] = False
+                sessionStorage[user_id]['last'] = None
+                city_arr = all_cities[:]
+                res['response']['text'] = 'Хорошо ' + sessionStorage[user_id]['first_name'] + '. Ты начинаешь!'
+                return
 
     cities = get_cities(req)
     if sessionStorage[user_id]['end']:
@@ -85,9 +94,9 @@ def handle_dialog(res, req):
                         res['response']['card']['type'] = 'BigImage'
                         res['response']['card']['image_id'] = get_picture(get_geo_info(city))
                         res['response']['text'] = 'Здесь должна была быть картинка города ' + city.title()
-                        if city[0][-1] == 'ь'or city[0][-1] == 'ы':
-                            if get_city(city[-1], alice=True):
-                                x = city.title() + ', тебе на ' + city[-2]
+                        if city[-1] == 'ь'or city[-1] == 'ы':
+                            if get_city(city[-2], alice=True):
+                                x = get_city_name(city.title()) + ', тебе на ' + city[-2]
                                 sessionStorage[user_id]['last'] = city[-2]
                             else:
                                 x = city.title() + '. На ' + city[-2] + ' больше нет городов, я победила)\n Хочешь сыграть еще?'
@@ -141,4 +150,4 @@ def get_cities(req):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5000, host='127.0.0.1')

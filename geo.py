@@ -1,6 +1,7 @@
 import requests
 import logging
 from requests import post
+from cities1 import country_codes
 import sys
 
 
@@ -46,7 +47,6 @@ def get_picture(coords):
         print("Запрос не удалось выполнить. Проверьте наличие сети Интернет.")
         sys.exit(1)
 
-
     # Запишем полученное изображение в файл.
 
     skill_id = 'ff930959-af59-4b76-ac73-688158f4dcbf'
@@ -59,3 +59,28 @@ def get_picture(coords):
     picture_code = s.json()['image']['id']
 
     return picture_code
+
+
+def get_city_name(city_name):
+    url = "https://geocode-maps.yandex.ru/1.x/"
+    params = {
+        'geocode': city_name,
+        'format': 'json'
+    }
+    data = requests.get(url, params).json()
+    country_code = data['response']['GeoObjectCollection'][
+        'featureMember'][0]['GeoObject']['metaDataProperty']['GeocoderMetaData'][
+        'Address']['country_code']
+    url1 = 'https://translate.yandex.net/api/v1.5/tr.json/translate'
+    api_key = 'trnsl.1.1.20190410T140331Z.9d0a5983cb2980db.acc9b5cefdb3a1e225c8180a04bfdfeaa332f600'
+    if country_code not in country_codes and country_code != 'US':
+        return None
+    if country_code == 'US':
+        country_code = 'EN'
+    params = {
+        'key': api_key,
+        'text': city_name,
+        'lang': 'ru-' + country_code.lower()
+    }
+    city_name = requests.get(url1, params).json()['text'][0]
+    return city_name

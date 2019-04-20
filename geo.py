@@ -1,4 +1,5 @@
 import requests
+import logging
 from requests import post
 import sys
 
@@ -18,7 +19,8 @@ def get_geo_info(city_name):
         # это пара двух чисел - координат
         long, lat = map(float, coordinates_str.split())
         # Вернем ответ
-        return long, lat
+
+        return str(long), str(lat)
 
     except Exception as e:
         return e
@@ -26,34 +28,32 @@ def get_geo_info(city_name):
 
 def get_picture(coords):
     try:
+
         map_request = "http://static-maps.yandex.ru/1.x/"
         lon, lat = coords
+
         params = {
             "ll": ",".join([lon, lat]),
             "z": "10",
             "l": "map"
         }
-        resp = requests.get(map_request, params=params)
 
-        if not resp:
+        response = requests.get(map_request, params=params)
+
+        if not response:
             print("Ошибка выполнения запроса:")
     except Exception:
         print("Запрос не удалось выполнить. Проверьте наличие сети Интернет.")
         sys.exit(1)
 
+
     # Запишем полученное изображение в файл.
-    map_file = "map.png"
-    try:
-        with open(map_file, "wb") as file:
-            file.write(resp.content)
-    except IOError as ex:
-        print("Ошибка записи временного файла:", ex)
-        sys.exit(2)
 
     skill_id = 'ff930959-af59-4b76-ac73-688158f4dcbf'
     token = 'AQAAAAADXyKXAAT7o0qDFWCp6EyPr0JuYtnKxjM'
     url = f'https://dialogs.yandex.net/api/v1/skills/{skill_id}/images'
-    files = {'file': resp.content}
+    files = {'file': response.content}
+
     headers = {'Authorization': f'OAuth {token}'}
     s = post(url, files=files, headers=headers)
     picture_code = s.json()['image']['id']

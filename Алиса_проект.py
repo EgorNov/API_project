@@ -39,7 +39,8 @@ def handle_dialog(res, req):
         sessionStorage[user_id]['end'] = False
         logging.warning(sessionStorage)
         res['response']['text'] = \
-            'Привет! Я могу играть с тобой в города! Учти что я знаю только русские города.' + '\nНазови свое имя.'
+            'Привет! Я могу играть с тобой в города! По возможности в скобках я буду\n' +\
+            ' указывать название города на языке страны, в которой находится город.\n' + '\nНазови свое имя.'
         return
     logging.warning(sessionStorage)
     if sessionStorage[user_id]['first_name'] is None:
@@ -60,15 +61,15 @@ def handle_dialog(res, req):
         {'title': 'Заново', 'hide': True}
     ]
     if 'заново' in req['request']['original_utterance'].lower():
-                sessionStorage[user_id]['end'] = False
-                sessionStorage[user_id]['last'] = None
-                city_arr = all_cities[:]
-                res['response']['text'] = 'Хорошо ' + sessionStorage[user_id]['first_name'] + '. Ты начинаешь!'
-                return
+        sessionStorage[user_id]['end'] = False
+        sessionStorage[user_id]['last'] = None
+        city_arr = all_cities[:]
+        res['response']['text'] = 'Хорошо ' + sessionStorage[user_id]['first_name'] + '. Ты начинаешь!'
+        return
 
     cities = get_cities(req)
     if sessionStorage[user_id]['end']:
-        for i in ['хорошо', 'ладно','давай','да']:
+        for i in ['хорошо', 'ладно', 'давай', 'да']:
             if i in req['request']['original_utterance'].lower():
                 sessionStorage[user_id]['end'] = False
                 sessionStorage[user_id]['last'] = None
@@ -85,7 +86,7 @@ def handle_dialog(res, req):
             if cities[0] in all_cities:
                 if cities[0] in city_arr:
                     city_arr.pop(city_arr.index(cities[0]))
-                    if cities[0][-1] == 'ь'or cities[0][-1] == 'ы':
+                    if cities[0][-1] == 'ь' or cities[0][-1] == 'ы':
                         city = get_city(cities[0][-2])
                     else:
                         city = get_city(cities[0][-1])
@@ -94,21 +95,40 @@ def handle_dialog(res, req):
                         res['response']['card']['type'] = 'BigImage'
                         res['response']['card']['image_id'] = get_picture(get_geo_info(city))
                         res['response']['text'] = 'Здесь должна была быть картинка города ' + city.title()
-                        if city[-1] == 'ь'or city[-1] == 'ы':
+                        if city[-1] == 'ь' or city[-1] == 'ы':
                             if get_city(city[-2], alice=True):
-                                x = get_city_name(city.title()) + ', тебе на ' + city[-2]
+                                name = get_city_name(city.title())
+                                if name:
+                                    x = city.title() + ' (' + name + ')' + ', тебе на ' + city[-2]
+                                else:
+                                    x = city.title() + ', тебе на ' + city[-2]
                                 sessionStorage[user_id]['last'] = city[-2]
                             else:
-                                x = city.title() + '. На ' + city[-2] + ' больше нет городов, я победила)\n Хочешь сыграть еще?'
+                                name = get_city_name(city.title())
+                                if name:
+                                    x = city.title() + ' (' + name + ')' + '. На ' + city[
+                                        -2] + ' больше нет городов, я победила)\n Хочешь сыграть еще?'
+                                else:
+                                    x = city.title() + '. На ' + city[
+                                        -2] + ' больше нет городов, я победила)\n Хочешь сыграть еще?'
                                 sessionStorage[user_id]['end'] = True
                         else:
                             if get_city(city[-1], alice=True):
-                                x = city.title() + ', тебе на ' + city[-1]
+                                name = get_city_name(city.title())
+                                if name:
+                                    x = city.title() + ' (' + name + ')' + ', тебе на ' + city[-1]
+                                else:
+                                    x = city.title() + ', тебе на ' + city[-1]
                                 sessionStorage[user_id]['last'] = city[-1]
                             else:
-                                x = city.title() + '. На ' + city[-1] + ' больше нет городов, я победила)\n Хочешь сыграть еще?'
+                                name = get_city_name(city.title())
+                                if name:
+                                    x = city.title() + ' (' + name + ')' + '. На ' + city[
+                                        -1] + ' больше нет городов, я победила)\n Хочешь сыграть еще?'
+                                else:
+                                    x = city.title() + '. На ' + city[
+                                        -1] + ' больше нет городов, я победила)\n Хочешь сыграть еще?'
                                 sessionStorage[user_id]['end'] = True
-
 
                         logging.warning(x)
                         res['response']['card']['title'] = x
@@ -118,15 +138,15 @@ def handle_dialog(res, req):
 
 
                 else:
-                    res['response']['text'] = sessionStorage[user_id]['first_name'] + ', этот город был! Попробуй другой)'
+                    res['response']['text'] = sessionStorage[user_id][
+                                                  'first_name'] + ', этот город был! Попробуй другой)'
             else:
                 res['response']['text'] = sessionStorage[user_id][
-                                          'first_name'] + ', я не знаю такого города! Попробуй другой)'
+                                              'first_name'] + ', я не знаю такого города! Попробуй другой)'
         else:
-             res['response']['text'] = 'Город должен быть на букву ' + sessionStorage[user_id]['last']
+            res['response']['text'] = 'Город должен быть на букву ' + sessionStorage[user_id]['last']
     else:
         res['response']['text'] = sessionStorage[user_id]['first_name'] + ', слишком много городов!'
-    logging.warning(2)
     return
 
 

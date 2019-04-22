@@ -70,17 +70,20 @@ def get_city_name(city_name):
     data = requests.get(url, params).json()
     country_code = data['response']['GeoObjectCollection'][
         'featureMember'][0]['GeoObject']['metaDataProperty']['GeocoderMetaData'][
-        'Address']['country_code']
+        'Address']['country_code'].lower()
     url1 = 'https://translate.yandex.net/api/v1.5/tr.json/translate'
     api_key = 'trnsl.1.1.20190410T140331Z.9d0a5983cb2980db.acc9b5cefdb3a1e225c8180a04bfdfeaa332f600'
-    if country_code not in country_codes and country_code != 'US':
+    if country_code not in country_codes and country_code != 'us' and country_code != 'gb' or country_code == 'ru':
         return None
-    if country_code == 'US':
-        country_code = 'EN'
+    if country_code == 'us':
+        country_code = 'en'
+    if country_code == 'gb':
+        country_code = 'en'
     params = {
         'key': api_key,
         'text': city_name,
         'lang': 'ru-' + country_code.lower()
     }
+
     city_name = requests.get(url1, params).json()['text'][0]
     return city_name
